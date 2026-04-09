@@ -8,10 +8,10 @@ Player::Player(string name, int maxHp) : Entity(name, maxHp)
 
 }
 
-int Player::attack(Entity& target) 
+int Player::attack(Entity& target, int damage) 
 { 
-    target.takeDamage(10); // Il faudra modifier pour que ca soit une valeur randdom.
-    return 10; // Ici aussi
+    target.takeDamage(damage); 
+    return damage; 
 }
 
 void Player::useItem(int index) 
