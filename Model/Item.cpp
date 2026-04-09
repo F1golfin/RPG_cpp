@@ -3,6 +3,7 @@
 #include "Player/Player.h"
 
 Item::Item(string name, ItemType type, int value)
+    : itemName(name), type(type), value(value)
 {
 
 }

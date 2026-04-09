@@ -15,5 +15,5 @@ int MiniBoss::getActCount() const
 
 MonsterType MiniBoss::getCategory() const 
 {
-    return MonsterType::NORMAL;
+    return MonsterType::MINIBOSS;
 }

@@ -4,6 +4,7 @@
 
 
 Entity::Entity(string name, int maxHp)
+    : name(name), hp(maxHp), maxHp(maxHp)
 {
 
 }

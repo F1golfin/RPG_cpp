@@ -3,8 +3,8 @@
 
 
 ActAction::ActAction(string id, string displayText, int mercyImpact) 
+    : id(id), displayText(displayText), mercyImpact(mercyImpact)
 {
-    
 }
 
 
