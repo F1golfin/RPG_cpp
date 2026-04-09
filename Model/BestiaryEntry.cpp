@@ -8,7 +8,7 @@ BestiaryEntry::BestiaryEntry(string name, MonsterType cat, int hp, int a, int d,
 
 }
 
-void BestiaryEntry::display() 
+void BestiaryEntry::display() const
 {
     cout << "[" << monsterName << "] HP:" << maxHp << " ATK:" << atk << (spared ? " (Spared)" : " (Killed)") << endl;
 }

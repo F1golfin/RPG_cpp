@@ -14,6 +14,6 @@ private:
     bool spared;
 public:
     BestiaryEntry(string name, MonsterType cat, int hp, int a, int d, bool s);
-    void display();
+    void display() const;
 };
 #endif

@@ -37,7 +37,7 @@ void Display::showInventory(Inventory& inv)
     }
 }
 
-void Display::showBestiary(vector<BestiaryEntry>& entries) 
+void Display::showBestiary(const vector<BestiaryEntry>& entries) 
 {
     for (int i = 0; i < (int)entries.size(); i++) 
     {
