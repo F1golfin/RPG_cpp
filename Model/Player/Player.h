@@ -12,7 +12,7 @@ private:
     Inventory inventory;
 public:
     Player(string name, int maxHp);
-    int attack(Entity& target);
+    int attack(Entity& target, int damage);
     void useItem(int index);
     void addVictory();
     void addKill();
