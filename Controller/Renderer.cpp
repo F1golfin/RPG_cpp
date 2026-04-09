@@ -26,11 +26,10 @@ void Renderer::showMainMenu()
 {
     cout << repeat('=', 68) << endl;
     cout << "| The Tower of eprajelle" << endl;
-    cout << "| [1] Start combat" << endl;
-    cout << "| [2] View bestiary" << endl;
-    cout << "| [3] View inventory" << endl;
-    cout << "| [4] Reload CSV data" << endl;
-    cout << "| [5] Exit" << endl;
+    cout << "| [1] View bestiary" << endl;
+    cout << "| [2] View inventory" << endl;
+    cout << "| [3] Reload CSV data" << endl;
+    cout << "| [4] Exit" << endl;
     cout << repeat('=', 68) << endl;
     cout << "Select an action > ";
 }

@@ -64,8 +64,6 @@ int readInt()
 
 Game::Game() : player("Frisk", 20)
 {
-    srand((unsigned int)time(nullptr));
-
     actCatalog.push_back(ActAction("OBSERVE", "Observe", 15));
     actCatalog.push_back(ActAction("COMPLIMENT", "Compliment", 20));
     actCatalog.push_back(ActAction("JOKE", "Tell a joke", 18));
@@ -185,17 +183,14 @@ void Game::showMenu()
 
         switch (choice) {
             case 1:
-                startCombat();
-                break;
-            case 2:
                 renderer.showBestiary(bestiary);
                 renderer.waitForEnter();
                 break;
-            case 3:
+            case 2:
                 renderer.showInventory(player.getItems());
                 renderer.waitForEnter();
                 break;
-            case 4:
+            case 3:
                 try {
                     loadFiles();
                     renderer.showMessage("CSV data reloaded.");
@@ -204,7 +199,7 @@ void Game::showMenu()
                 }
                 renderer.waitForEnter();
                 break;
-            case 5:
+            case 4:
                 running = false;
                 break;
             default:
@@ -216,185 +211,49 @@ void Game::showMenu()
 
 void Game::startCombat()
 {
-    if (monstersPool.empty()) {
-        renderer.showMessage("No monsters available.");
-        renderer.waitForEnter();
-        return;
-    }
-
-    Monster* selectedMonster = selectRandomMonster();
-    if (selectedMonster == nullptr) {
-        renderer.showMessage("No monster selected.");
-        renderer.waitForEnter();
-        return;
-    }
-
-    bool sparedMonster = false;
-
-    while (player.isAlive() && selectedMonster->isAlive()) {
-        sparedMonster = false;
-        renderer.showMonster(*selectedMonster);
-        renderer.showPlayerStats(player);
-        renderer.showCombatMenu();
-
-        int choice = readInt();
-
-        switch (choice) {
-            case 1:
-                handleFight(*selectedMonster);
-                break;
-            case 2:
-                handleAct(*selectedMonster);
-                break;
-            case 3:
-                handleItem();
-                break;
-            case 4:
-                sparedMonster = selectedMonster->canBeMercied();
-                handleMercy(*selectedMonster);
-                break;
-            default:
-                renderer.showMessage("Invalid combat command.");
-                continue;
-        }
-
-        if (!selectedMonster->isAlive()) {
-            if (sparedMonster) {
-                renderer.showMessage(selectedMonster->getName() + " was spared.");
-            } else {
-                player.addVictory();
-                player.addKill();
-                addBestiaryEntry(*selectedMonster, false);
-                renderer.showMessage(selectedMonster->getName() + " was defeated.");
-            }
-            break;
-        }
-
-        if (selectedMonster->canBeMercied()) {
-            renderer.showMessage(selectedMonster->getName() + " can now be spared.");
-        }
-
-        if (selectedMonster->isAlive()) {
-            int damage = selectedMonster->attack(player);
-            renderer.showMessage(selectedMonster->getName() + " attacks for " + to_string(damage) + " damage.");
-        }
-    }
-
-    if (!player.isAlive()) {
-        renderer.showMessage("You were defeated.");
-    }
-
-    delete selectedMonster;
-    renderer.waitForEnter();
+    // TODO: Implement combat loop.
+    renderer.showMessage("TODO: combat system not implemented yet.");
 }
 
 Monster* Game::selectRandomMonster()
 {
-    if (monstersPool.empty()) {
-        return nullptr;
-    }
-
-    int index = rand() % monstersPool.size();
-    return new Monster(*monstersPool[index]);
+    // TODO: Return a random monster from the pool when combat is implemented.
+    return nullptr;
 }
 
 void Game::handleFight(Monster& monster)
 {
-    const int damage = max(1, 10 - monster.getDef());
-    monster.takeDamage(damage);
-    renderer.showMessage("You attack " + monster.getName() + " for " + to_string(damage) + " damage.");
+    // TODO: Implement fight action.
+    (void)monster;
 }
 
 void Game::handleAct(Monster& monster)
 {
-    vector<ActAction*> acts = monster.getActs();
-
-    if (acts.empty()) {
-        renderer.showMessage("This monster has no ACT options.");
-        return;
-    }
-
-    for (int i = 0; i < (int)acts.size(); i++) {
-        renderer.showMessage("[" + to_string(i + 1) + "] " + acts[i]->getDisplayText());
-    }
-
-    int choice = readInt();
-    if (choice < 1 || choice > (int)acts.size()) {
-        renderer.showMessage("Invalid ACT choice.");
-        return;
-    }
-
-    monster.applyAct(*acts[choice - 1]);
-    renderer.showMessage("You used " + acts[choice - 1]->getDisplayText() + ".");
+    // TODO: Implement ACT actions.
+    (void)monster;
 }
 
 void Game::handleItem()
 {
-    if (!player.hasItems()) {
-        renderer.showMessage("Inventory empty.");
-        return;
-    }
-
-    renderer.showInventory(player.getItems());
-    int choice = readInt();
-
-    if (choice < 1 || choice > (int)player.getItems().size()) {
-        renderer.showMessage("Invalid item choice.");
-        return;
-    }
-
-    string itemName = player.getItems()[choice - 1].getItem().getName();
-    player.useItem(choice - 1);
-    renderer.showMessage("You used " + itemName + ".");
+    // TODO: Implement item usage during combat.
 }
 
 void Game::handleMercy(Monster& monster)
 {
-    if (!monster.canBeMercied()) {
-        renderer.showMessage("Mercy is not available yet.");
-        return;
-    }
-
-    player.addVictory();
-    player.addSpare();
-    addBestiaryEntry(monster, true);
-    monster.takeDamage(monster.getHp());
-    renderer.showMessage("You spared " + monster.getName() + ".");
+    // TODO: Implement mercy flow.
+    (void)monster;
 }
 
 void Game::addBestiaryEntry(Monster monster, bool spared)
 {
-    for (BestiaryEntry& entry : bestiary) {
-        if (entry.getMonsterName() == monster.getName()) {
-            entry.setSpared(spared);
-            return;
-        }
-    }
-
-    bestiary.push_back(BestiaryEntry(
-        monster.getName(),
-        monster.getCategory(),
-        monster.getMaxHp(),
-        monster.getAtk(),
-        monster.getDef(),
-        spared
-    ));
+    // TODO: Update bestiary state after a combat encounter.
+    (void)monster;
+    (void)spared;
 }
 
 EndType Game::getEnding()
 {
-    if (!player.isAlive()) {
-        return EndType::DEFEAT;
-    }
-
-    if (player.getVictories() > 0 && player.getVictories() == player.getKills()) {
-        return EndType::GENOCIDE;
-    }
-
-    if (player.getVictories() > 0 && player.getVictories() == player.getSpares()) {
-        return EndType::PACIFIST;
-    }
-
+    // TODO: Compute the ending once combat and progression are implemented.
     return EndType::NEUTRAL;
 }
 
