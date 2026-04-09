@@ -10,17 +10,17 @@ Entity::Entity(string name, int maxHp)
 }
 
 
-string Entity::getName()  
+string Entity::getName() const
 { 
     return name; 
 }
 
-int Entity::getHp()
+int Entity::getHp() const
 { 
     return hp;
 }
 
-int Entity::getMaxHp()
+int Entity::getMaxHp() const
 { 
     return maxHp;
 }
@@ -35,7 +35,7 @@ void Entity::heal(int amount)
     hp = min(maxHp, hp + amount); 
 }
 
-bool Entity::isAlive()  
+bool Entity::isAlive() const
 { 
     return hp > 0; 
 }

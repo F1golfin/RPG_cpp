@@ -9,6 +9,16 @@ BestiaryEntry::BestiaryEntry(string name, MonsterType cat, int hp, int a, int d,
 
 }
 
+string BestiaryEntry::getMonsterName() const
+{
+    return monsterName;
+}
+
+void BestiaryEntry::setSpared(bool value)
+{
+    spared = value;
+}
+
 void BestiaryEntry::display() const
 {
     string categoryLabel = "NORMAL";
@@ -19,7 +29,7 @@ void BestiaryEntry::display() const
         categoryLabel = "BOSS";
     }
 
-    cout << monsterName
+    cout << "| " << monsterName
          << " [" << categoryLabel << "]"
          << " HP:" << maxHp
          << " ATK:" << atk

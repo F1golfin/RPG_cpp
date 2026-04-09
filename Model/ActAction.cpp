@@ -8,17 +8,17 @@ ActAction::ActAction(string id, string displayText, int mercyImpact)
 }
 
 
-string ActAction::getId() 
+string ActAction::getId() const
 { 
     return id; 
 }
 
-string ActAction::getDisplayText() 
+string ActAction::getDisplayText() const
 { 
     return displayText;
 }
 
-int ActAction::getMercyImpact()  
+int ActAction::getMercyImpact() const
 { 
     return mercyImpact; 
 }

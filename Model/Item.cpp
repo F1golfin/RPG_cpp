@@ -7,15 +7,15 @@ Item::Item(string name, ItemType type, int value)
 {
 
 }
-string Item::getName() 
+string Item::getName() const
 {
     return itemName; 
 }
-ItemType Item::getType()  
+ItemType Item::getType() const
 { 
     return type; 
 }
-int Item::getValue()  
+int Item::getValue() const
 { 
     return value; 
 }

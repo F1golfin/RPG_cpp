@@ -8,12 +8,12 @@ InventorySlot::InventorySlot(Item item, int quantity) : item(item), quantity(qua
 }
 
 
-Item InventorySlot::getItem() 
+Item InventorySlot::getItem() const
 { 
     return item; 
 }
 
-int InventorySlot::getQuantity()  
+int InventorySlot::getQuantity() const
 { 
     return quantity; 
 }
@@ -31,37 +31,7 @@ void InventorySlot::removeOne()
     }
 }
 
-bool InventorySlot::isEmpty()
+bool InventorySlot::isEmpty() const
 { 
     return quantity <= 0; 
-}
-
-
-void Inventory::addItem(Item item, int quantity) 
-{ 
-    items.push_back(InventorySlot(item, quantity)); 
-
-}
-
-void Inventory::useItem(int index, Player& player) // Player le joueur ou le monstre sur lequel on applique l'objet.
-{
-    if(index >= 0 && index < (int)items.size()) 
-    {
-        items[index].getItem().applyEffect(player);
-        items[index].removeOne();
-        if(items[index].isEmpty()) 
-        {
-            items.erase(items.begin() + index);  // On supprime l'objet s'il y en a plus.
-        }
-    }
-}
-
-bool Inventory::isEmpty()  
-{ 
-    return items.empty(); 
-}
-
-vector<InventorySlot> Inventory::getItems()  
-{ 
-    return items; 
 }

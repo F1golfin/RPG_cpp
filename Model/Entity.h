@@ -12,11 +12,11 @@ protected:
 public:
     Entity(string name, int maxHp);
     virtual ~Entity() {}
-    string getName();
-    int getHp();
-    int getMaxHp();
+    string getName() const;
+    int getHp() const;
+    int getMaxHp() const;
     void takeDamage(int amount);
     void heal(int amount);
-    bool isAlive();
+    bool isAlive() const;
 };
 #endif

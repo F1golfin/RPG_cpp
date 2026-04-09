@@ -10,21 +10,10 @@ private:
     int quantity;
 public:
     InventorySlot(Item item, int quantity);
-    Item getItem();
-    int getQuantity();
+    Item getItem() const;
+    int getQuantity() const;
     void addQuantity(int amount);
     void removeOne();
-    bool isEmpty();
-};
-
-class Inventory {
-private:
-    vector<InventorySlot> items;
-public:
-    void addItem(Item item, int quantity);
-    void useItem(int index, Player& player);
-    void display();
-    bool isEmpty();
-    vector<InventorySlot> getItems();
+    bool isEmpty() const;
 };
 #endif

@@ -14,9 +14,9 @@ private:
     int value;
 public:
     Item(string name, ItemType type, int value);
-    string getName();
-    ItemType getType();
-    int getValue();
+    string getName() const;
+    ItemType getType() const;
+    int getValue() const;
     void applyEffect(Player& player);
 };
 #endif

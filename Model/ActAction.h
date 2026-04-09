@@ -10,8 +10,8 @@ private:
     int mercyImpact;
 public:
     ActAction(string id, string displayText, int mercyImpact);
-    string getId();
-    string getDisplayText();
-    int getMercyImpact();
+    string getId() const;
+    string getDisplayText() const;
+    int getMercyImpact() const;
 };
 #endif
