@@ -1,15 +1,35 @@
 #include "Renderer.h"
+#include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <limits>
 
 namespace {
-const int SCREEN_WIDTH = 78;
+const int SCREEN_WIDTH = 64;
 
 string repeat(char value, int count)
 {
     // On reutilise cette fonction pour dessiner les bordures de l'interface.
     return string(count, value);
+}
+
+string centerText(const string& text)
+{
+    // On centre un titre court dans la largeur de la console.
+    int padding = max(0, (SCREEN_WIDTH - (int)text.size()) / 2);
+    return repeat(' ', padding) + text;
+}
+
+string progressBar(int value, int maximum, int size)
+{
+    // On transforme une valeur numerique en petite barre visuelle.
+    if (maximum <= 0) {
+        return repeat('-', size);
+    }
+
+    value = max(0, min(value, maximum));
+    int filled = value * size / maximum;
+    return repeat('#', filled) + repeat('-', size - filled);
 }
 
 void showSectionTitle(const string& title)
@@ -22,19 +42,24 @@ void showSectionTitle(const string& title)
 
 }
 
+void Renderer::clearScreen()
+{
+    // On efface la console pour afficher seulement l'ecran courant.
+    cout << "\033[2J\033[H";
+}
+
 void Renderer::showMainMenu()
 {
     // On affiche le menu principal hors combat.
+    clearScreen();
     cout << endl;
     cout << repeat('=', SCREEN_WIDTH) << endl;
-    cout << "| THE TOWER OF EPRAJELLE" << endl;
+    cout << centerText("THE TOWER OF EPRAJELLE") << endl;
+    cout << centerText("Console RPG") << endl;
     cout << repeat('-', SCREEN_WIDTH) << endl;
-    cout << "| [1] Start combat" << endl;
-    cout << "| [2] Complete bestiary" << endl;
-    cout << "| [3] Combat history" << endl;
-    cout << "| [4] Player statistics" << endl;
-    cout << "| [5] Inventory / use item" << endl;
-    cout << "| [6] Reload CSV data" << endl;
+    cout << "| [1] Start combat          | [2] Complete bestiary" << endl;
+    cout << "| [3] Combat history        | [4] Player statistics" << endl;
+    cout << "| [5] Inventory / use item  | [6] Reload CSV data" << endl;
     cout << "| [7] Exit" << endl;
     cout << repeat('=', SCREEN_WIDTH) << endl;
     cout << "Select an action > ";
@@ -52,33 +77,37 @@ void Renderer::showCombatMenu()
 void Renderer::showPlayerStats(const Player& player)
 {
     // On regroupe les statistiques importantes du joueur sur une ligne.
-    cout << "| Player : " << left << setw(24) << player.getName()
-         << " HP " << right << setw(3) << player.getHp() << "/" << setw(3) << player.getMaxHp()
-         << " | Wins " << setw(2) << player.getVictories()
-         << " | Kills " << setw(2) << player.getKills()
-         << " | Spares " << setw(2) << player.getSpares()
-         << " |" << endl;
+    cout << repeat('-', SCREEN_WIDTH) << endl;
+    cout << "Player : " << player.getName() << endl;
+    cout << "HP     : [" << progressBar(player.getHp(), player.getMaxHp(), 16) << "] "
+         << player.getHp() << "/" << player.getMaxHp() << endl;
+    cout << "Wins   : " << player.getVictories()
+         << "   Kills: " << player.getKills()
+         << "   Spares: " << player.getSpares() << endl;
+    cout << repeat('-', SCREEN_WIDTH) << endl;
 }
 
 void Renderer::showMonster(const Monster& monster)
 {
     // On affiche la fiche du monstre au debut de chaque tour.
+    clearScreen();
     cout << endl;
     cout << repeat('=', SCREEN_WIDTH) << endl;
-    cout << "| Enemy  : " << left << setw(24) << monster.getName()
-         << " Type " << setw(8) << monster.getCategoryLabel()
-         << " | HP " << right << setw(3) << monster.getHp() << "/" << setw(3) << monster.getMaxHp()
-         << " |" << endl;
-    cout << "| Stats  : ATK " << setw(3) << monster.getAtk()
-         << " | DEF " << setw(3) << monster.getDef()
-         << " | Mercy " << setw(3) << monster.getMercy() << "/" << setw(3) << monster.getMercyGoal()
-         << setw(38) << " |" << endl;
+    cout << "Enemy  : " << monster.getName()
+         << " (" << monster.getCategoryLabel() << ")" << endl;
+    cout << "Stats  : ATK " << monster.getAtk()
+         << " | DEF " << monster.getDef() << endl;
+    cout << "HP     : [" << progressBar(monster.getHp(), monster.getMaxHp(), 24) << "] "
+         << monster.getHp() << "/" << monster.getMaxHp() << endl;
+    cout << "Mercy  : [" << progressBar(monster.getMercy(), monster.getMercyGoal(), 24) << "] "
+         << monster.getMercy() << "/" << monster.getMercyGoal() << endl;
     cout << repeat('=', SCREEN_WIDTH) << endl;
 }
 
 void Renderer::showInventory(const vector<InventorySlot>& items)
 {
     // On affiche l'inventaire sous forme de tableau.
+    clearScreen();
     showSectionTitle("PLAYER INVENTORY");
 
     if (items.empty()) {
@@ -105,6 +134,7 @@ void Renderer::showInventory(const vector<InventorySlot>& items)
 void Renderer::showBestiary(const vector<BestiaryEntry>& entries, const string& title)
 {
     // On reutilise cette fonction pour le bestiaire complet et l'historique.
+    clearScreen();
     showSectionTitle(title);
 
     if (entries.empty()) {
@@ -125,7 +155,12 @@ void Renderer::showBestiary(const vector<BestiaryEntry>& entries, const string& 
 
 void Renderer::showMessage(const string& text)
 {
-    cout << text << endl;
+    if (text.empty()) {
+        cout << endl;
+        return;
+    }
+
+    cout << ">> " << text << endl;
 }
 
 void Renderer::waitForEnter()

@@ -11,6 +11,7 @@ using namespace std;
 
 class Renderer {
 public:
+    void clearScreen();
     void showMainMenu();
     void showCombatMenu();
     void showPlayerStats(const Player& player);

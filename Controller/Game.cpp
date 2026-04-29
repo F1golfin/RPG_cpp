@@ -76,23 +76,28 @@ void Game::askPlayerName() {
   }
 }
 
-Game::Game() : player("Frisk", 20) {
+Game::Game() : player("Frisk", 60) {
   srand((unsigned int)time(nullptr));
 
+  // On donne 60 HP au joueur pour que les premiers combats soient jouables.
+  // Le nom "Frisk" sert seulement de valeur par defaut si le joueur ne tape rien.
+
   // On cree le catalogue commun : le CSV indique seulement les identifiants.
-  actCatalog.push_back(ActAction("OBSERVE", "Observe", 15));
-  actCatalog.push_back(ActAction("COMPLIMENT", "Compliment", 20));
-  actCatalog.push_back(ActAction("JOKE", "Tell a joke", 18));
+  // Les nombres positifs augmentent Mercy, les nombres negatifs l'abaissent.
+  // On a augmente les valeurs positives pour que la route pacifiste soit viable.
+  actCatalog.push_back(ActAction("OBSERVE", "Observe", 25));
+  actCatalog.push_back(ActAction("COMPLIMENT", "Compliment", 30));
+  actCatalog.push_back(ActAction("JOKE", "Tell a joke", 25));
   actCatalog.push_back(ActAction("INSULT", "Insult", -10));
-  actCatalog.push_back(ActAction("OFFER_SNACK", "Offer snack", 24));
-  actCatalog.push_back(ActAction("DISCUSS", "Discuss", 14));
-  actCatalog.push_back(ActAction("RESPECT", "Show respect", 22));
-  actCatalog.push_back(ActAction("APOLOGIZE", "Apologize", 25));
-  actCatalog.push_back(ActAction("REASON", "Reason calmly", 20));
-  actCatalog.push_back(ActAction("CHALLENGE", "Challenge honorably", 8));
-  actCatalog.push_back(ActAction("DANCE", "Dance", 16));
+  actCatalog.push_back(ActAction("OFFER_SNACK", "Offer snack", 35));
+  actCatalog.push_back(ActAction("DISCUSS", "Discuss", 25));
+  actCatalog.push_back(ActAction("RESPECT", "Show respect", 30));
+  actCatalog.push_back(ActAction("APOLOGIZE", "Apologize", 35));
+  actCatalog.push_back(ActAction("REASON", "Reason calmly", 30));
+  actCatalog.push_back(ActAction("CHALLENGE", "Challenge honorably", 20));
+  actCatalog.push_back(ActAction("DANCE", "Dance", 25));
   actCatalog.push_back(ActAction("TAUNT", "Taunt", -15));
-  actCatalog.push_back(ActAction("PRAY", "Pray", 30));
+  actCatalog.push_back(ActAction("PRAY", "Pray", 40));
 }
 
 Game::~Game() {
@@ -231,7 +236,6 @@ void Game::showMenu() {
       break;
     case 5:
       // On autorise l'utilisation d'un item meme hors combat.
-      renderer.showMessage("Choose an item number to use it, or 0 to cancel.");
       handleItem();
       renderer.waitForEnter();
       break;
@@ -336,18 +340,46 @@ void Game::startCombat() {
 
 Monster *Game::selectRandomMonster() {
   // On tire seulement le monstre au hasard, pas les degats.
+  // On adapte aussi la categorie a l'avancement pour eviter un boss au premier combat.
   if (monstersPool.empty()) {
     return nullptr;
   }
 
-  int index = rand() % monstersPool.size();
-  return new Monster(*monstersPool[index]);
+  MonsterType wantedCategory = MonsterType::NORMAL;
+
+  // On cree une progression simple :
+  // 0 a 3 victoires  -> monstres NORMAL
+  // 4 a 6 victoires  -> MINIBOSS
+  // 7 a 10 victoires -> BOSS
+  if (player.getVictories() >= 7) {
+    wantedCategory = MonsterType::BOSS;
+  } else if (player.getVictories() >= 4) {
+    wantedCategory = MonsterType::MINIBOSS;
+  }
+
+  vector<Monster *> possibleMonsters;
+
+  // On filtre le pool pour garder seulement les monstres de la categorie voulue.
+  for (Monster *monster : monstersPool) {
+    if (monster->getCategory() == wantedCategory) {
+      possibleMonsters.push_back(monster);
+    }
+  }
+
+  if (possibleMonsters.empty()) {
+    // On garde une securite si le CSV ne contient pas la categorie demandee.
+    possibleMonsters = monstersPool;
+  }
+
+  // On copie le monstre choisi pour que ses HP/Mercy changent seulement pendant ce combat.
+  int index = rand() % possibleMonsters.size();
+  return new Monster(*possibleMonsters[index]);
 }
 
 void Game::handleFight(Monster &monster) {
   // Le sujet proposait des degats aleatoires entre 0 et les HP max.
   // On choisit des degats fixes, reduits par la defense du monstre.
-  const int damage = max(1, 10 - monster.getDef());
+  const int damage = max(1, 18 - monster.getDef());
   monster.takeDamage(damage);
   renderer.showMessage("You attack " + monster.getName() + " for " +
                        to_string(damage) + " damage.");
@@ -373,9 +405,24 @@ void Game::handleAct(Monster &monster) {
     return;
   }
 
+  // On garde la Mercy avant/apres pour afficher clairement l'effet de l'ACT.
+  int mercyBefore = monster.getMercy();
   monster.applyAct(*acts[choice - 1]);
+  int mercyAfter = monster.getMercy();
+  int mercyChange = mercyAfter - mercyBefore;
+
   // On applique l'impact de l'action sur la jauge Mercy.
   renderer.showMessage("You used " + acts[choice - 1]->getDisplayText() + ".");
+
+  if (mercyChange >= 0) {
+    renderer.showMessage("Mercy +" + to_string(mercyChange) + " (" +
+                         to_string(mercyAfter) + "/" +
+                         to_string(monster.getMercyGoal()) + ").");
+  } else {
+    renderer.showMessage("Mercy " + to_string(mercyChange) + " (" +
+                         to_string(mercyAfter) + "/" +
+                         to_string(monster.getMercyGoal()) + ").");
+  }
 }
 
 void Game::handleItem() {
@@ -386,6 +433,7 @@ void Game::handleItem() {
   }
 
   renderer.showInventory(player.getItems());
+  renderer.showMessage("Choose an item number to use it, or 0 to cancel.");
   int choice = readInt();
 
   if (choice == 0) {
@@ -453,6 +501,7 @@ void Game::showEnding() {
   // On affiche la fin et les monstres concernes par cette route.
   EndType ending = getEnding();
 
+  renderer.clearScreen();
   renderer.showMessage("");
   renderer.showMessage("========== ENDING ==========");
 
