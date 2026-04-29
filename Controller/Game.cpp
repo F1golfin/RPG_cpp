@@ -44,6 +44,12 @@ ItemType parseItemType(const string &value) {
   if (value == "HEAL") {
     return ItemType::HEAL;
   }
+  if (value == "BUFF_ATTACK") {
+    return ItemType::BUFF_ATTACK;
+  }
+  if (value == "BUFF_DEFENSE") {
+    return ItemType::BUFF_DEFENSE;
+  }
 
   throw runtime_error("Unknown item type: " + value);
 }
@@ -54,6 +60,10 @@ int readInt() {
   cin >> value;
 
   if (cin.fail()) {
+    if (cin.eof()) {
+      throw runtime_error("Input closed.");
+    }
+
     cin.clear();
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
     return -1;
@@ -114,7 +124,7 @@ void Game::loadFiles() {
 }
 
 void Game::loadItems(string fileName) {
-  // On charge l'inventaire initial depuis items.csv.
+  // On charge la reserve d'items disponible depuis items.csv.
   ifstream file(fileName);
 
   if (!file.is_open()) {
@@ -122,6 +132,7 @@ void Game::loadItems(string fileName) {
   }
 
   player.clearItems();
+  itemPool.clear();
 
   string line;
   getline(file, line);
@@ -138,8 +149,112 @@ void Game::loadItems(string fileName) {
     }
 
     Item item(fields[0], parseItemType(fields[1]), stoi(fields[2]));
-    player.addItem(item, stoi(fields[3]));
+    addItemToPool(item, stoi(fields[3]));
   }
+
+  giveStartingItems();
+}
+
+void Game::addItemToPool(Item item, int quantity) {
+  if (quantity <= 0) {
+    return;
+  }
+
+  // On garde les quantites du CSV comme stock total droppable.
+  for (InventorySlot &slot : itemPool) {
+    if (slot.getItem().getName() == item.getName()) {
+      slot.addQuantity(quantity);
+      return;
+    }
+  }
+
+  itemPool.push_back(InventorySlot(item, quantity));
+}
+
+bool Game::grantItemFromPool(int index) {
+  if (index < 0 || index >= (int)itemPool.size()) {
+    return false;
+  }
+
+  // On transfere un seul exemplaire du stock vers l'inventaire du joueur.
+  Item item = itemPool[index].getItem();
+  player.addItem(item, 1);
+  itemPool[index].removeOne();
+
+  if (itemPool[index].isEmpty()) {
+    itemPool.erase(itemPool.begin() + index);
+  }
+
+  return true;
+}
+
+void Game::giveStartingItems() {
+  // On commence avec seulement deux items pour laisser la progression aux drops.
+  int itemCount = min(2, (int)itemPool.size());
+
+  for (int i = 0; i < itemCount; i++) {
+    vector<int> starterCandidates;
+
+    // On privilegie des petits soins au depart pour eviter un debut trop facile.
+    for (int j = 0; j < (int)itemPool.size(); j++) {
+      Item item = itemPool[j].getItem();
+      if (item.getType() == ItemType::HEAL && item.getValue() <= 25) {
+        starterCandidates.push_back(j);
+      }
+    }
+
+    int index = starterCandidates.empty()
+                    ? rand() % itemPool.size()
+                    : starterCandidates[rand() % starterCandidates.size()];
+    grantItemFromPool(index);
+  }
+}
+
+void Game::tryDropItem(MonsterType category) {
+  if (itemPool.empty()) {
+    renderer.showMessage("No items remain in the drop pool.");
+    return;
+  }
+
+  int dropChance = 35;
+  if (category == MonsterType::MINIBOSS) {
+    dropChance = 60;
+  } else if (category == MonsterType::BOSS) {
+    dropChance = 85;
+  }
+
+  // On augmente la chance de drop selon la rarete du monstre tue.
+  if (rand() % 100 >= dropChance) {
+    renderer.showMessage("No item dropped.");
+    return;
+  }
+
+  vector<int> candidates;
+  for (int i = 0; i < (int)itemPool.size(); i++) {
+    Item item = itemPool[i].getItem();
+
+    // On adapte les drops au type de monstre pour eviter de donner les gros buffs trop tot.
+    if (category == MonsterType::NORMAL && item.getType() == ItemType::HEAL &&
+        item.getValue() <= 25) {
+      candidates.push_back(i);
+    } else if (category == MonsterType::MINIBOSS &&
+               (item.getType() == ItemType::HEAL || item.getValue() <= 3)) {
+      candidates.push_back(i);
+    } else if (category == MonsterType::BOSS) {
+      candidates.push_back(i);
+    }
+  }
+
+  if (candidates.empty()) {
+    for (int i = 0; i < (int)itemPool.size(); i++) {
+      candidates.push_back(i);
+    }
+  }
+
+  int selectedIndex = candidates[rand() % candidates.size()];
+  string itemName = itemPool[selectedIndex].getItem().getName();
+  grantItemFromPool(selectedIndex);
+  renderer.showMessage("Dropped item: " + itemName + ".");
 }
 
 void Game::loadMonsters(string fileName) {
@@ -180,8 +295,15 @@ void Game::loadMonsters(string fileName) {
     int def = stoi(fields[4]);
     int mercyGoal = stoi(fields[5]);
     vector<ActAction *> acts;
+    string introText = "";
 
-    for (int i = 6; i < (int)fields.size(); i++) {
+    if (fields.size() > 10) {
+      // On recupere une phrase d'introduction pour rendre les monstres plus vivants.
+      introText = fields[10];
+    }
+
+    int actLimit = min(10, (int)fields.size());
+    for (int i = 6; i < actLimit; i++) {
       if (fields[i] == "-") {
         // On saute les cases vides utilisees pour les monstres avec moins d'ACT.
         continue;
@@ -196,8 +318,19 @@ void Game::loadMonsters(string fileName) {
       }
     }
 
-    monstersPool.push_back(
-        new Monster(name, hp, atk, def, mercyGoal, category, acts));
+    if (category == MonsterType::MINIBOSS) {
+      // On cree une classe derivee pour rendre le comportement des miniboss polymorphe.
+      monstersPool.push_back(new MiniBoss(name, hp, atk, def, mercyGoal, acts,
+                                          introText));
+    } else if (category == MonsterType::BOSS) {
+      // On cree une classe derivee pour rendre le comportement des boss polymorphe.
+      monstersPool.push_back(new BossMonster(name, hp, atk, def, mercyGoal,
+                                             acts, introText));
+    } else {
+      // On garde aussi une classe derivee pour les monstres normaux.
+      monstersPool.push_back(new NormalMonster(name, hp, atk, def, mercyGoal,
+                                               acts, introText));
+    }
     completeBestiary.push_back(BestiaryEntry(name, category, hp, atk, def,
                                              EncounterStatus::NOT_FOUGHT));
   }
@@ -274,10 +407,15 @@ void Game::startCombat() {
   }
 
   bool sparedMonster = false;
+  bool introShown = false;
 
   while (player.isAlive() && selectedMonster->isAlive()) {
     sparedMonster = false;
     renderer.showMonster(*selectedMonster);
+    if (!introShown && !selectedMonster->getIntroText().empty()) {
+      renderer.showMessage(selectedMonster->getIntroText());
+      introShown = true;
+    }
     renderer.showPlayerStats(player);
     renderer.showCombatMenu();
 
@@ -315,6 +453,7 @@ void Game::startCombat() {
         player.addKill();
         recordCombatResult(*selectedMonster, EncounterStatus::KILLED);
         renderer.showMessage(selectedMonster->getName() + " was defeated.");
+        tryDropItem(selectedMonster->getCategory());
       }
       break;
     }
@@ -371,16 +510,16 @@ Monster *Game::selectRandomMonster() {
     possibleMonsters = monstersPool;
   }
 
-  // On copie le monstre choisi pour que ses HP/Mercy changent seulement pendant ce combat.
+  // On clone le monstre choisi pour garder son vrai type derive pendant le combat.
   int index = rand() % possibleMonsters.size();
-  return new Monster(*possibleMonsters[index]);
+  return possibleMonsters[index]->clone();
 }
 
 void Game::handleFight(Monster &monster) {
-  // Le sujet proposait des degats aleatoires entre 0 et les HP max.
-  // On choisit des degats fixes, reduits par la defense du monstre.
-  const int damage = max(1, 18 - monster.getDef());
+  // On calcule l'attaque du joueur avec les buffs puis la defense du monstre.
+  const int damage = max(1, 10 + player.getAttackBonus() - monster.getDef());
   monster.takeDamage(damage);
+
   renderer.showMessage("You attack " + monster.getName() + " for " +
                        to_string(damage) + " damage.");
 }
@@ -423,6 +562,23 @@ void Game::handleAct(Monster &monster) {
                          to_string(mercyAfter) + "/" +
                          to_string(monster.getMercyGoal()) + ").");
   }
+
+  string actId = acts[choice - 1]->getId();
+
+  // On applique un effet secondaire pour rendre ACT plus strategique.
+  if (actId == "OBSERVE" || actId == "REASON") {
+    monster.changeAttack(-2);
+    renderer.showMessage(monster.getName() + " loses focus. ATK -2.");
+  } else if (actId == "OFFER_SNACK" || actId == "APOLOGIZE") {
+    player.heal(5);
+    renderer.showMessage("You recover 5 HP while calming the situation.");
+  } else if (actId == "INSULT" || actId == "TAUNT") {
+    monster.changeAttack(2);
+    renderer.showMessage(monster.getName() + " becomes angrier. ATK +2.");
+  } else if (actId == "RESPECT" || actId == "CHALLENGE") {
+    monster.changeDefense(-1);
+    renderer.showMessage(monster.getName() + " lowers its guard. DEF -1.");
+  }
 }
 
 void Game::handleItem() {
@@ -446,9 +602,34 @@ void Game::handleItem() {
     return;
   }
 
-  string itemName = player.getItems()[choice - 1].getItem().getName();
+  Item item = player.getItems()[choice - 1].getItem();
+  string itemName = item.getName();
+  int hpBefore = player.getHp();
+  int attackBefore = player.getAttackBonus();
+  int defenseBefore = player.getDefenseBonus();
+
   player.useItem(choice - 1);
   renderer.showMessage("You used " + itemName + ".");
+
+  if (item.getType() == ItemType::HEAL) {
+    // On affiche le soin reel pour que le joueur comprenne l'effet de l'item.
+    int healed = player.getHp() - hpBefore;
+    renderer.showMessage("HP +" + to_string(healed) + " (" +
+                         to_string(player.getHp()) + "/" +
+                         to_string(player.getMaxHp()) + ").");
+  } else if (item.getType() == ItemType::BUFF_ATTACK) {
+    // On affiche le bonus gagne pour que le joueur comprenne l'effet offensif.
+    int gained = player.getAttackBonus() - attackBefore;
+    renderer.showMessage("ATK bonus +" + to_string(gained) +
+                         " (total +" + to_string(player.getAttackBonus()) +
+                         ").");
+  } else if (item.getType() == ItemType::BUFF_DEFENSE) {
+    // On affiche le bonus gagne pour que le joueur comprenne l'effet defensif.
+    int gained = player.getDefenseBonus() - defenseBefore;
+    renderer.showMessage("DEF bonus +" + to_string(gained) +
+                         " (total +" + to_string(player.getDefenseBonus()) +
+                         ").");
+  }
 }
 
 void Game::handleMercy(Monster &monster) {
@@ -489,6 +670,12 @@ EndType Game::getEnding() {
     return EndType::GENOCIDE;
   }
 
+  if (player.getVictories() >= VICTORY_GOAL &&
+      player.getVictories() == player.getSpares()) {
+    // On distingue la route parfaite de la route pacifiste classique.
+    return EndType::TRUE_PACIFIST;
+  }
+
   if (player.getVictories() > 0 &&
       player.getVictories() == player.getSpares()) {
     return EndType::PACIFIST;
@@ -505,20 +692,30 @@ void Game::showEnding() {
   renderer.showMessage("");
   renderer.showMessage("========== ENDING ==========");
 
+  renderer.showMessage("Route summary:");
+  renderer.showMessage("Victories: " + to_string(player.getVictories()));
+  renderer.showMessage("Kills: " + to_string(player.getKills()));
+  renderer.showMessage("Spares: " + to_string(player.getSpares()));
+  renderer.showMessage("");
+
   if (ending == EndType::GENOCIDE) {
     renderer.showMessage(
         "Genocide ending: every victory was obtained by killing.");
-    renderer.showBestiary(combatHistory, "KILLED MONSTERS");
+    renderer.showBestiary(combatHistory, "KILLED MONSTERS", false);
+  } else if (ending == EndType::TRUE_PACIFIST) {
+    renderer.showMessage(
+        "True Pacifist ending: every monster was spared until the final victory.");
+    renderer.showBestiary(combatHistory, "SPARED MONSTERS", false);
   } else if (ending == EndType::PACIFIST) {
     renderer.showMessage(
         "Pacifist ending: every victory was obtained by sparing.");
-    renderer.showBestiary(combatHistory, "SPARED MONSTERS");
+    renderer.showBestiary(combatHistory, "SPARED MONSTERS", false);
   } else if (ending == EndType::DEFEAT) {
     renderer.showMessage("Defeat ending: your journey ends here.");
   } else {
     renderer.showMessage(
         "Neutral ending: you killed some monsters and spared others.");
-    renderer.showBestiary(combatHistory, "COMBAT HISTORY");
+    renderer.showBestiary(combatHistory, "COMBAT HISTORY", false);
   }
 
   renderer.showMessage("============================");

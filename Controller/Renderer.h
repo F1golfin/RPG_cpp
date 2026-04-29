@@ -17,7 +17,7 @@ public:
     void showPlayerStats(const Player& player);
     void showMonster(const Monster& monster);
     void showInventory(const vector<InventorySlot>& items);
-    void showBestiary(const vector<BestiaryEntry>& entries, const string& title);
+    void showBestiary(const vector<BestiaryEntry>& entries, const string& title, bool shouldClear = true);
     void showMessage(const string& text);
     void waitForEnter();
 };

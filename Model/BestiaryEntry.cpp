@@ -15,6 +15,26 @@ string BestiaryEntry::getMonsterName() const
     return monsterName;
 }
 
+MonsterType BestiaryEntry::getCategory() const
+{
+    return category;
+}
+
+int BestiaryEntry::getMaxHp() const
+{
+    return maxHp;
+}
+
+int BestiaryEntry::getAtk() const
+{
+    return atk;
+}
+
+int BestiaryEntry::getDef() const
+{
+    return def;
+}
+
 EncounterStatus BestiaryEntry::getStatus() const
 {
     return status;

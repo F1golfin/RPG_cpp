@@ -2,7 +2,6 @@
 #include "Player.h"
 #include <iostream>
 
-
 Player::Player(string name, int maxHp) : Entity(name, maxHp) 
 {
     // On cree le joueur avec un nom et ses HP maximum.
@@ -11,8 +10,8 @@ Player::Player(string name, int maxHp) : Entity(name, maxHp)
 int Player::attack(Entity& target)
 {
     // Le sujet proposait des degats aleatoires entre 0 et les HP max.
-    // On choisit des degats fixes pour rendre le combat plus lisible.
-    const int damage = 10;
+    // On ajoute le bonus d'attaque donne par certains items.
+    const int damage = 10 + attackBonus;
     target.takeDamage(damage);
     return damage; 
 }
@@ -87,6 +86,18 @@ void Player::addSpare()
     spares += 1; 
 }
 
+void Player::addAttackBonus(int amount)
+{
+    // On augmente durablement l'attaque avec les items trouves pendant l'aventure.
+    attackBonus += amount;
+}
+
+void Player::addDefenseBonus(int amount)
+{
+    // On augmente durablement la defense avec les items trouves pendant l'aventure.
+    defenseBonus += amount;
+}
+
 int Player::getVictories() const
 { 
     return victories; 
@@ -100,6 +111,16 @@ int Player::getKills() const
 int Player::getSpares() const
 { 
     return spares; 
+}
+
+int Player::getAttackBonus() const
+{
+    return attackBonus;
+}
+
+int Player::getDefenseBonus() const
+{
+    return defenseBonus;
 }
 
 const vector<InventorySlot>& Player::getItems() const
@@ -119,5 +140,7 @@ void Player::getStats()
          << " | Victories: " << victories
          << " | Kills: " << kills
          << " | Spares: " << spares
+         << " | ATK bonus: +" << attackBonus
+         << " | DEF bonus: +" << defenseBonus
          << endl;
 }

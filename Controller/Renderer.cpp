@@ -5,7 +5,7 @@
 #include <limits>
 
 namespace {
-const int SCREEN_WIDTH = 64;
+const int SCREEN_WIDTH = 86;
 
 string repeat(char value, int count)
 {
@@ -30,6 +30,62 @@ string progressBar(int value, int maximum, int size)
     value = max(0, min(value, maximum));
     int filled = value * size / maximum;
     return repeat('#', filled) + repeat('-', size - filled);
+}
+
+string itemTypeLabel(ItemType type)
+{
+    // On convertit le type d'item en texte pour afficher un inventaire plus clair.
+    if (type == ItemType::BUFF_ATTACK) {
+        return "BUFF_ATTACK";
+    }
+
+    if (type == ItemType::BUFF_DEFENSE) {
+        return "BUFF_DEFENSE";
+    }
+
+    return "HEAL";
+}
+
+string itemEffectLabel(const Item& item)
+{
+    // On resume l'effet pour que l'inventaire soit utile sans lire le README.
+    if (item.getType() == ItemType::BUFF_ATTACK) {
+        return "ATK +" + to_string(item.getValue());
+    }
+
+    if (item.getType() == ItemType::BUFF_DEFENSE) {
+        return "DEF +" + to_string(item.getValue());
+    }
+
+    return "HP +" + to_string(item.getValue());
+}
+
+string categoryLabel(MonsterType category)
+{
+    // On centralise les libelles du bestiaire pour garder un tableau coherent.
+    if (category == MonsterType::MINIBOSS) {
+        return "MINIBOSS";
+    }
+
+    if (category == MonsterType::BOSS) {
+        return "BOSS";
+    }
+
+    return "NORMAL";
+}
+
+string statusLabel(EncounterStatus status)
+{
+    // On transforme le statut interne en texte court et lisible.
+    if (status == EncounterStatus::KILLED) {
+        return "Killed";
+    }
+
+    if (status == EncounterStatus::SPARED) {
+        return "Spared";
+    }
+
+    return "Not seen";
 }
 
 void showSectionTitle(const string& title)
@@ -84,6 +140,8 @@ void Renderer::showPlayerStats(const Player& player)
     cout << "Wins   : " << player.getVictories()
          << "   Kills: " << player.getKills()
          << "   Spares: " << player.getSpares() << endl;
+    cout << "Buffs  : ATK +" << player.getAttackBonus()
+         << "   DEF +" << player.getDefenseBonus() << endl;
     cout << repeat('-', SCREEN_WIDTH) << endl;
 }
 
@@ -116,25 +174,36 @@ void Renderer::showInventory(const vector<InventorySlot>& items)
         return;
     }
 
-    cout << "| #  | Item                         | Type | Heal | Quantity |" << endl;
+    int totalQuantity = 0;
+    for (const InventorySlot& slot : items) {
+        totalQuantity += slot.getQuantity();
+    }
+
+    cout << "| Slots: " << items.size()
+         << " | Total items: " << totalQuantity << endl;
+    cout << repeat('-', SCREEN_WIDTH) << endl;
+    cout << "| #  | Item                         | Type         | Effect      | Qty |" << endl;
     cout << repeat('-', SCREEN_WIDTH) << endl;
 
     for (int i = 0; i < (int)items.size(); i++) {
+        Item item = items[i].getItem();
         cout << "| " << right << setw(2) << i + 1
-             << " | " << left << setw(28) << items[i].getItem().getName()
-             << " | HEAL"
-             << " | " << right << setw(4) << items[i].getItem().getValue()
-             << " | " << setw(8) << items[i].getQuantity()
+             << " | " << left << setw(28) << item.getName()
+             << " | " << setw(12) << itemTypeLabel(item.getType())
+             << " | " << setw(11) << itemEffectLabel(item)
+             << " | " << right << setw(3) << items[i].getQuantity()
              << " |" << endl;
     }
 
     cout << repeat('=', SCREEN_WIDTH) << endl;
 }
 
-void Renderer::showBestiary(const vector<BestiaryEntry>& entries, const string& title)
+void Renderer::showBestiary(const vector<BestiaryEntry>& entries, const string& title, bool shouldClear)
 {
     // On reutilise cette fonction pour le bestiaire complet et l'historique.
-    clearScreen();
+    if (shouldClear) {
+        clearScreen();
+    }
     showSectionTitle(title);
 
     if (entries.empty()) {
@@ -143,11 +212,38 @@ void Renderer::showBestiary(const vector<BestiaryEntry>& entries, const string& 
         return;
     }
 
-    cout << "| Name                         | Type     |  HP | ATK | DEF | Status          |" << endl;
-    cout << repeat('-', SCREEN_WIDTH) << endl;
+    int killedCount = 0;
+    int sparedCount = 0;
+    int unknownCount = 0;
 
     for (const BestiaryEntry& entry : entries) {
-        entry.display();
+        if (entry.getStatus() == EncounterStatus::KILLED) {
+            killedCount += 1;
+        } else if (entry.getStatus() == EncounterStatus::SPARED) {
+            sparedCount += 1;
+        } else {
+            unknownCount += 1;
+        }
+    }
+
+    cout << "| Entries: " << entries.size()
+         << " | Killed: " << killedCount
+         << " | Spared: " << sparedCount
+         << " | Not seen: " << unknownCount << endl;
+    cout << repeat('-', SCREEN_WIDTH) << endl;
+    cout << "| #  | Monster                      | Category |  HP | ATK | DEF | Status   |" << endl;
+    cout << repeat('-', SCREEN_WIDTH) << endl;
+
+    for (int i = 0; i < (int)entries.size(); i++) {
+        const BestiaryEntry& entry = entries[i];
+        cout << "| " << right << setw(2) << i + 1
+             << " | " << left << setw(28) << entry.getMonsterName()
+             << " | " << setw(8) << categoryLabel(entry.getCategory())
+             << " | " << right << setw(3) << entry.getMaxHp()
+             << " | " << setw(3) << entry.getAtk()
+             << " | " << setw(3) << entry.getDef()
+             << " | " << left << setw(8) << statusLabel(entry.getStatus())
+             << right << " |" << endl;
     }
 
     cout << repeat('=', SCREEN_WIDTH) << endl;

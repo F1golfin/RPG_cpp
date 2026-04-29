@@ -25,5 +25,11 @@ void Item::applyEffect(Player& player)
     {
         // On applique l'effet de soin directement sur le joueur.
         player.heal(value); 
+    } else if (type == ItemType::BUFF_ATTACK) {
+        // On applique un bonus d'attaque pour rendre certains items offensifs.
+        player.addAttackBonus(value);
+    } else if (type == ItemType::BUFF_DEFENSE) {
+        // On applique un bonus de defense pour reduire les degats recus.
+        player.addDefenseBonus(value);
     }
 }

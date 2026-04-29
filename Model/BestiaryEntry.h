@@ -15,6 +15,10 @@ private:
 public:
     BestiaryEntry(string name, MonsterType cat, int hp, int a, int d, EncounterStatus status);
     string getMonsterName() const;
+    MonsterType getCategory() const;
+    int getMaxHp() const;
+    int getAtk() const;
+    int getDef() const;
     EncounterStatus getStatus() const;
     void setStatus(EncounterStatus value);
     void display() const;

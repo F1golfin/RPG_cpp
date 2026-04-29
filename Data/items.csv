@@ -2,13 +2,16 @@ nom;type;valeur;quantite
 Estus Flask;HEAL;20;3
 Large Estus Flask;HEAL;35;2
 Divine Blessing;HEAL;50;1
-Ember;HEAL;15;4
+Ember;BUFF_ATTACK;2;2
 Ashen Flask;HEAL;10;3
 Soul Fragment;HEAL;8;5
 Fire Keeper Tear;HEAL;25;2
 Ancient Potion;HEAL;40;1
 Mossfruit;HEAL;12;4
-Sunlit Balm;HEAL;18;3
+Sunlit Balm;BUFF_DEFENSE;2;2
 Knight Ration;HEAL;22;2
 Blessed Dew;HEAL;30;2
-Phoenix Ember;HEAL;45;1
+Phoenix Ember;BUFF_ATTACK;4;1
+Stone Charm;BUFF_DEFENSE;3;1
+Sharpening Oil;BUFF_ATTACK;3;2
+Guardian Sigil;BUFF_DEFENSE;1;3

@@ -13,6 +13,7 @@ class Game {
 private:
     Player player;
     vector<Monster*> monstersPool;
+    vector<InventorySlot> itemPool;
     vector<ActAction> actCatalog;
     vector<BestiaryEntry> completeBestiary;
     vector<BestiaryEntry> combatHistory;
@@ -23,6 +24,10 @@ public:
     void loadFiles();
     void loadItems(string fileName);
     void loadMonsters(string fileName);
+    void addItemToPool(Item item, int quantity);
+    bool grantItemFromPool(int index);
+    void giveStartingItems();
+    void tryDropItem(MonsterType category);
     void askPlayerName();
     void showMenu();
     void showEnding();

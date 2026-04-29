@@ -10,6 +10,8 @@ private:
     int victories = 0;
     int kills = 0;
     int spares = 0;
+    int attackBonus = 0;
+    int defenseBonus = 0;
     vector<InventorySlot> items;
 public:
     Player(string name, int maxHp);
@@ -21,9 +23,13 @@ public:
     void addVictory();
     void addKill();
     void addSpare();
+    void addAttackBonus(int amount);
+    void addDefenseBonus(int amount);
     int getVictories() const;
     int getKills() const;
     int getSpares() const;
+    int getAttackBonus() const;
+    int getDefenseBonus() const;
     const vector<InventorySlot>& getItems() const;
     bool hasItems() const;
     void getStats();
