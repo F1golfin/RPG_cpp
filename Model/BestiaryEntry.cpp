@@ -1,12 +1,13 @@
 
 #include "BestiaryEntry.h"
+#include <iomanip>
 #include <iostream>
 
 
-BestiaryEntry::BestiaryEntry(string name, MonsterType cat, int hp, int a, int d, bool s) 
-    : monsterName(name), category(cat), maxHp(hp), atk(a), def(d), spared(s)
+BestiaryEntry::BestiaryEntry(string name, MonsterType cat, int hp, int a, int d, EncounterStatus status) 
+    : monsterName(name), category(cat), maxHp(hp), atk(a), def(d), status(status)
 {
-
+    // On garde une copie simple des informations utiles au bestiaire.
 }
 
 string BestiaryEntry::getMonsterName() const
@@ -14,13 +15,20 @@ string BestiaryEntry::getMonsterName() const
     return monsterName;
 }
 
-void BestiaryEntry::setSpared(bool value)
+EncounterStatus BestiaryEntry::getStatus() const
 {
-    spared = value;
+    return status;
+}
+
+void BestiaryEntry::setStatus(EncounterStatus value)
+{
+    // On met a jour le statut quand le joueur gagne contre ce monstre.
+    status = value;
 }
 
 void BestiaryEntry::display() const
 {
+    // On laisse chaque entree s'afficher, le Renderer choisit seulement le titre.
     string categoryLabel = "NORMAL";
 
     if (category == MonsterType::MINIBOSS) {
@@ -29,11 +37,21 @@ void BestiaryEntry::display() const
         categoryLabel = "BOSS";
     }
 
-    cout << "| " << monsterName
-         << " [" << categoryLabel << "]"
-         << " HP:" << maxHp
-         << " ATK:" << atk
-         << " DEF:" << def
-         << " STATUS:" << (spared ? "SPARED" : "UNKNOWN")
+    string statusLabel = "Not encountered";
+
+    // On convertit le statut interne en texte lisible.
+    if (status == EncounterStatus::KILLED) {
+        statusLabel = "Killed";
+    } else if (status == EncounterStatus::SPARED) {
+        statusLabel = "Spared";
+    }
+
+    cout << "| " << left << setw(28) << monsterName
+         << " | " << setw(8) << categoryLabel
+         << " | " << right << setw(3) << maxHp
+         << " | " << setw(3) << atk
+         << " | " << setw(3) << def
+         << " | " << left << setw(15) << statusLabel
+         << right << " |"
          << endl;
 }

@@ -13,7 +13,7 @@ private:
     vector<InventorySlot> items;
 public:
     Player(string name, int maxHp);
-    int attack(Entity& target);
+    int attack(Entity& target) override;
     void useItem(int index);
     void addItem(Item item, int quantity);
     void clearItems();

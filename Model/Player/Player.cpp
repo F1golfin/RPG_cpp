@@ -5,11 +5,13 @@
 
 Player::Player(string name, int maxHp) : Entity(name, maxHp) 
 {
-
+    // On cree le joueur avec un nom et ses HP maximum.
 }
 
 int Player::attack(Entity& target)
 {
+    // Le sujet proposait des degats aleatoires entre 0 et les HP max.
+    // On choisit des degats fixes pour rendre le combat plus lisible.
     const int damage = 10;
     target.takeDamage(damage);
     return damage; 
@@ -21,10 +23,12 @@ void Player::useItem(int index)
         return;
     }
 
+    // On applique l'effet, puis on retire une quantite de l'inventaire.
     items[index].getItem().applyEffect(*this);
     items[index].removeOne();
 
     if (items[index].isEmpty()) {
+        // On supprime le slot quand il ne reste plus aucun exemplaire.
         items.erase(items.begin() + index);
     }
 }
@@ -35,6 +39,7 @@ void Player::addItem(Item item, int quantity)
         return;
     }
 
+    // On augmente seulement la quantite si l'item existe deja.
     for (InventorySlot& slot : items) {
         if (slot.getItem().getName() == item.getName()) {
             slot.addQuantity(quantity);
@@ -42,11 +47,13 @@ void Player::addItem(Item item, int quantity)
         }
     }
 
+    // On ajoute une nouvelle ligne dans l'inventaire si l'item est nouveau.
     items.push_back(InventorySlot(item, quantity));
 }
 
 void Player::clearItems()
 {
+    // On vide l'inventaire avant de recharger les items depuis le CSV.
     items.clear();
 }
 

@@ -14,7 +14,8 @@ private:
     Player player;
     vector<Monster*> monstersPool;
     vector<ActAction> actCatalog;
-    vector<BestiaryEntry> bestiary;
+    vector<BestiaryEntry> completeBestiary;
+    vector<BestiaryEntry> combatHistory;
     Renderer renderer;
 public:
     Game();
@@ -22,14 +23,16 @@ public:
     void loadFiles();
     void loadItems(string fileName);
     void loadMonsters(string fileName);
+    void askPlayerName();
     void showMenu();
+    void showEnding();
     void startCombat();
     Monster* selectRandomMonster();
     void handleFight(Monster& monster);
     void handleAct(Monster& monster);
     void handleItem();
     void handleMercy(Monster& monster);
-    void addBestiaryEntry(Monster monster, bool spared);
+    void recordCombatResult(const Monster& monster, EncounterStatus status);
     void run();
     EndType getEnding();
 };

@@ -17,7 +17,7 @@ protected:
 public:
     Monster(string name, int hp, int atk, int def, int mercyGoal, MonsterType category, vector<ActAction*> acts);
     virtual ~Monster() {}
-    int attack(Entity& target);
+    int attack(Entity& target) override;
     void applyAct(ActAction action);
     bool canBeMercied() const;
     int getMercy() const;
@@ -27,5 +27,6 @@ public:
     vector<ActAction*> getActs() const;
     int getActCount() const;
     MonsterType getCategory() const;
+    string getCategoryLabel() const;
 };
 #endif

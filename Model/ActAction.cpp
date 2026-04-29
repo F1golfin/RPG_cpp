@@ -5,6 +5,7 @@
 ActAction::ActAction(string id, string displayText, int mercyImpact) 
     : id(id), displayText(displayText), mercyImpact(mercyImpact)
 {
+    // On stocke ici une action ACT du catalogue commun.
 }
 
 

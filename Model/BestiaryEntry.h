@@ -11,11 +11,12 @@ private:
     int maxHp;
     int atk;
     int def;
-    bool spared;
+    EncounterStatus status;
 public:
-    BestiaryEntry(string name, MonsterType cat, int hp, int a, int d, bool s);
+    BestiaryEntry(string name, MonsterType cat, int hp, int a, int d, EncounterStatus status);
     string getMonsterName() const;
-    void setSpared(bool value);
+    EncounterStatus getStatus() const;
+    void setStatus(EncounterStatus value);
     void display() const;
 };
 #endif

@@ -23,6 +23,7 @@ void Item::applyEffect(Player& player)
 { 
     if(type == ItemType::HEAL) 
     {
+        // On applique l'effet de soin directement sur le joueur.
         player.heal(value); 
     }
 }
